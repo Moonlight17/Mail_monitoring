@@ -1,0 +1,1 @@
+pyinstaller result.py --onefile

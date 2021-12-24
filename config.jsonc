@@ -1,0 +1,12 @@
+{
+    "auth": {
+        "email": "serov@ancprotek.ru",
+        "password": "qnM5KsTS",
+        "server": "mail.ancprotek.ru",
+        "port": "465"
+    },
+    "Subject":"File from project",
+    "path":"text.txt",
+    "mail_to":"serov@ancprotek.ru"
+
+}
