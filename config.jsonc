@@ -5,8 +5,8 @@
         "server": "mail.ancprotek.ru",
         "port": "465"
     },
-    "Subject":"File from project",
-    "path":"text.txt",
+    "Subject":"ОЛОЛО",
+    "path":"D:\семья видео\Наши Документы\Уведомление по парковкам от 12.05.2014.rtf",
     "mail_to":"serov@ancprotek.ru"
 
 }
