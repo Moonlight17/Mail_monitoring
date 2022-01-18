@@ -4,8 +4,33 @@ import os
 import smtplib
 import sys
 import time
+from email import encoders
+
+import mimetypes  # Импорт класса для обработки неизвестных MIME-типов, базирующихся на расширении файла
 from email.mime.multipart import MIMEMultipart
-from email.mime.text import MIMEText
+from email.mime.base import MIMEBase  # Общий тип
+from email.mime.text import MIMEText  # Текст/HTML
+from email.mime.image import MIMEImage  # Изображения
+from email.mime.audio import MIMEAudio  # Аудио
+from email.mime.multipart import MIMEMultipart  # Многокомпонентный объект
+import zipfile
+
+
+
+
+
+
+def process_attachement(files):  # Функция по обработке списка, добавляемых к сообщению файлов
+    data =[]
+    for f in files:
+        if os.path.isfile(f):  # Если файл существует
+            data.append(f)  # Добавляем файл к сообщению
+        elif os.path.exists(f):  # Если путь не файл и существует, значит - папка
+            dir = os.listdir(f)  # Получаем список файлов в папке
+            for file in dir:  # Перебираем все файлы и...
+                data.append(f + "\\" + file)  # ...добавляем каждый файл к сообщению
+    return data
+
 
 
 def log(message):
@@ -15,18 +40,35 @@ def log(message):
     with open(cur_path + '\errors.json', 'w', encoding='utf-8') as f:
         json.dump(data, f, ensure_ascii=False, indent=4)
 
+def archive(files):
+    archive = zipfile.ZipFile('Archive.zip', mode='w')
+    try:
+        for file in files:
+            name = file.split('\\', -1)[-1]
+            archive.write(file, arcname=name)
+            print("File - " + name)
+            print('File added.')
+    except:
+        print('Reading files now.')
+    archive.close()
+    print("File - " + file)
 
-def mail(config):
+
+def mail(config, archive):
     file_full = config['path']
     msg = MIMEMultipart('alternative')
     msg['Subject'] = config['Subject']
+
+
     try:
-        path = file_full.split('\\', -1)
-        name = path[-1]
-        file = open(file_full)
-        attachment = MIMEText(file.read())
-        attachment.add_header('Content-Disposition', 'attachment', filename=name)
-        msg.attach(attachment)
+        # path = file_full.split('\\', -1)
+        name = 'Archive.zip'
+
+        part = MIMEBase("application", "octet-stream")
+        part.set_payload(open('Archive' + ".zip", "rb").read())
+        encoders.encode_base64(part)
+        part.add_header("Content-Disposition", "attachment; filename=\"%s.zip\"" % ('Archive'))
+        msg.attach(part)
     except FileNotFoundError:
 
         log("Отсутствует отправляемый файл")
@@ -54,7 +96,7 @@ def mail(config):
 def config(path):
     configure = {"auth": {"email": "###@ancprotek.ru", "password": "###", "server": "mail.ancprotek.ru", "port": "465"},
                  "Subject": "File from project", "path": "text.txt", "mail_to": "serov@ancprotek.ru"}
-    with open(path + '\config.jsonc', 'w', encoding='utf-8') as f:
+    with open(path + '\\'+'result_config.jsonc', 'w', encoding='utf-8') as f:
         json.dump(configure, f, ensure_ascii=False, indent=4)
 
 
@@ -66,10 +108,16 @@ except FileNotFoundError:
     print("Removed")
 now = datetime.datetime.now()
 try:
-    with open(cur_path + "\config.jsonc", "r", encoding='utf-8') as f:
+    with open(cur_path + "\\result_config.jsonc", "r", encoding='utf-8') as f:
         config = json.load(f)
-        config['path'] = config['path'].replace("'\'", "'\\'")
-        mail(config)
+        for i in config['path']:
+            print(i)
+            i = i.replace("'\'", "'\\'")
+        # config['path'] = config['path'].replace("'\'", "'\\'")
+        files= process_attachement(config['path'])
+        archive = archive(files)
+        # print(archive)
+        mail(config, archive)
 except json.decoder.JSONDecodeError:
     log("Проверьте правильность определения пути")
     exit(1)
