@@ -6,12 +6,7 @@ import sys
 import time
 from email import encoders
 
-import mimetypes  # Импорт класса для обработки неизвестных MIME-типов, базирующихся на расширении файла
-from email.mime.multipart import MIMEMultipart
-from email.mime.base import MIMEBase  # Общий тип
-from email.mime.text import MIMEText  # Текст/HTML
-from email.mime.image import MIMEImage  # Изображения
-from email.mime.audio import MIMEAudio  # Аудио
+from email.mime.base import MIMEBase  # Общий типАудио
 from email.mime.multipart import MIMEMultipart  # Многокомпонентный объект
 import zipfile
 
@@ -25,10 +20,13 @@ def process_attachement(files):  # Функция по обработке спи
     for f in files:
         if os.path.isfile(f):  # Если файл существует
             data.append(f)  # Добавляем файл к сообщению
-        elif os.path.exists(f):  # Если путь не файл и существует, значит - папка
+        elif (os.path.exists(f))== True:  # Если путь не файл и существует, значит - папка
             dir = os.listdir(f)  # Получаем список файлов в папке
             for file in dir:  # Перебираем все файлы и...
                 data.append(f + "\\" + file)  # ...добавляем каждый файл к сообщению
+        elif (os.path.isfile(f)==False)or(os.path.exists(f))== False:
+            log("Ошибка пути к файлу/файлам для отправки")
+            exit(1)
     return data
 
 
@@ -57,17 +55,14 @@ def archive(files):
 def mail(config, archive):
     file_full = config['path']
     msg = MIMEMultipart('alternative')
-    msg['Subject'] = config['Subject']
+    msg['Subject'] = "[$"+now.strftime("%d-%m-%Y %H:%M:%S")+"$] " + config['Subject']
 
 
     try:
-        # path = file_full.split('\\', -1)
-        name = 'Archive.zip'
-
         part = MIMEBase("application", "octet-stream")
-        part.set_payload(open('Archive' + ".zip", "rb").read())
+        part.set_payload(open("Archive.zip", "rb").read())
         encoders.encode_base64(part)
-        part.add_header("Content-Disposition", "attachment; filename=\"%s.zip\"" % ('Archive'))
+        part.add_header("Content-Disposition", "attachment; filename=Archive.zip")
         msg.attach(part)
     except FileNotFoundError:
 
@@ -116,7 +111,6 @@ try:
         # config['path'] = config['path'].replace("'\'", "'\\'")
         files= process_attachement(config['path'])
         archive = archive(files)
-        # print(archive)
         mail(config, archive)
 except json.decoder.JSONDecodeError:
     log("Проверьте правильность определения пути")
